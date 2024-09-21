@@ -7,39 +7,47 @@
     rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
-  outputs = { self, nixpkgs, flake-utils, rust-overlay }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      rust-overlay,
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         overlays = [ (import rust-overlay) ];
-        pkgs = import nixpkgs { 
-          inherit system overlays; 
+        pkgs = import nixpkgs {
+          inherit system overlays;
           config.allowUnfree = true;
         };
         rustVersion = pkgs.rust-bin.stable.latest.default;
-        
-        commonEnv = {
-          OPENSSL_NO_VENDOR = 1;
-          OPENSSL_DIR = "${pkgs.openssl.dev}";
-          OPENSSL_LIB_DIR = "${pkgs.openssl.out}/lib";
-          RUSTFLAGS = "-C target-cpu=native";
-        };
 
-        commonBuildInputs = with pkgs; [ 
-          openssl 
-          openssl.dev
+        # commonEnv = {
+        #   OPENSSL_NO_VENDOR = 1;
+        #   OPENSSL_DIR = "${pkgs.openssl.dev}";
+        #   OPENSSL_LIB_DIR = "${pkgs.openssl.out}/lib";
+        #   RUSTFLAGS = "-C target-cpu=native";
+        # };
+
+        commonBuildInputs = with pkgs; [
+          openssl
           zlib
         ];
 
-        commonNativeBuildInputs = with pkgs; [ 
-          pkg-config 
-          cmake 
-          rustVersion 
+        commonNativeBuildInputs = with pkgs; [
+          pkg-config
+          cmake
+          rustVersion
           perl
         ];
 
-      in rec {
+      in
+      rec {
         packages = rec {
-          default = pkgs.rustPlatform.buildRustPackage ({
+          # default = pkgs.rustPlatform.buildRustPackage ({
+          default = pkgs.rustPlatform.buildRustPackage {
             pname = "lsp-ai";
             version = "0.7.0";
 
@@ -53,7 +61,7 @@
             nativeBuildInputs = commonNativeBuildInputs;
             buildInputs = commonBuildInputs;
 
-            buildFeatures = [ "all" ];
+            # buildFeatures = [ "all" ];
 
             doCheck = false;
 
@@ -61,13 +69,17 @@
               description = "An open-source language server that serves as a backend for AI-powered functionality";
               homepage = "https://github.com/SilasMarvin/lsp-ai";
               license = licenses.mit;
-              maintainers = [ /* Add maintainers here */ ];
+              maintainers =
+                [
+                  # Add maintainers here
+                ];
             };
-          } // commonEnv);
+          };
+          # } // commonEnv);
 
           devPackage = default.overrideAttrs (oldAttrs: {
             name = "lsp-ai-dev";
-            
+
             buildPhase = ''
               export CARGO_HOME="/tmp/.cargo"
               export RUSTUP_HOME="/tmp/.rustup"
@@ -81,19 +93,21 @@
           });
         };
 
-        devShells.default = pkgs.mkShell ({
+        # devShells.default = pkgs.mkShell ({
+        devShells.default = pkgs.mkShell {
           inputsFrom = [ packages.default ];
           packages = with pkgs; [
             rust-analyzer
             clippy
             rustfmt
           ];
-          
+
           shellHook = ''
             export CARGO_HOME="/tmp/.cargo"
             export RUSTUP_HOME="/tmp/.rustup"
           '';
-        } // commonEnv);
+        };
+        # } // commonEnv);
       }
     );
 }
